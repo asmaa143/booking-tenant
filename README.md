@@ -32,13 +32,7 @@ php artisan test:bookings
 #### 📋 Test Command Explanation
 
 The `php artisan test:bookings` command is a custom Artisan command that:
-
-- 🧪 Runs comprehensive tests for the booking system
-- 📊 Tests booking creation, validation, and management
-- 🔍 Validates multi-tenant booking isolation
-- ⚡ Checks availability conflicts and time slot generation
-- 📝 Generates detailed test reports for booking functionality
-
+- Runs only the tests related to the Booking module
 ## 🧪 Test Coverage Details
 
 ### 🔧 BookingServiceTest (Unit Tests)

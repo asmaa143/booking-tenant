@@ -21,7 +21,7 @@ php artisan migrate
 ```
 
 📂 API Documentation (Postman Collection)
-🔗 Postman Collection Link
+🔗 [Postman Collection Link](https://documenter.getpostman.com/view/23176160/2sB34cp2vi)
 
 Includes all endpoints for:
 

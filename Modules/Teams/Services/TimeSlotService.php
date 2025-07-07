@@ -78,6 +78,12 @@ class TimeSlotService
 
         return $slots;
     }
+    public function getAvailableSlots($teamId, $date)
+    {
+        $team = Team::findOrFail($teamId);
+        $carbonDate = Carbon::parse($date);
 
+        return $this->generateSlots($team, $carbonDate, $carbonDate);
+    }
 
 }

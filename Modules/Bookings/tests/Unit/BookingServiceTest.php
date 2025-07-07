@@ -2,19 +2,16 @@
 
 namespace Modules\Bookings\Tests\Unit;
 
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Bookings\Models\Booking;
 use Modules\Bookings\Repositories\BookingRepository;
 use Modules\Bookings\Services\BookingService;
-use Modules\Teams\Models\Team;
-use Modules\Tenants\Models\Tenant;
-use Modules\Users\Models\User;
+use Modules\Bookings\Tests\TestHelperTrait;
 use Tests\TestCase;
 
 class BookingServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, TestHelperTrait;
 
     protected BookingService $service;
 
@@ -28,32 +25,19 @@ class BookingServiceTest extends TestCase
 
     public function test_create_booking_successful()
     {
-        $tenant = Tenant::create(['name' => 'Test Tenant']);
-        $user = User::create([
-            'tenant_id' => $tenant->id,
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('password'),
-        ]);
-        $team = Team::create([
-            'tenant_id' => $tenant->id,
-            'name' => 'Test Team',
-        ]);
+        extract($this->createTenantUserTeam());
 
-        // Ensure availability exists for slot validation logic to pass
-        $team->availabilities()->create([
-            'day_of_week' => Carbon::today()->dayOfWeek,
-            'start_time' => '09:00:00',
-            'end_time' => '17:00:00',
-        ]);
+        $this->addAvailability($team);
+
+        $slot = $this->getValidSlot($team->id);
 
         $data = [
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,
             'team_id' => $team->id,
-            'date' => Carbon::today()->toDateString(),
-            'start_time' => '09:00:00',
-            'end_time' => '10:00:00',
+            'date' => $slot['date'],
+            'start_time' => $slot['start_time'],
+            'end_time' => $slot['end_time'],
         ];
 
         $booking = $this->service->createBooking($data);
@@ -61,7 +45,7 @@ class BookingServiceTest extends TestCase
         $this->assertInstanceOf(Booking::class, $booking);
         $this->assertDatabaseHas('bookings', [
             'team_id' => $team->id,
-            'start_time' => '09:00:00',
+            'start_time' => $slot['start_time'],
         ]);
     }
 
@@ -70,42 +54,29 @@ class BookingServiceTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Slot is already booked.');
 
-        $tenant = Tenant::create(['name' => 'Test Tenant']);
-        $user = User::create([
-            'tenant_id' => $tenant->id,
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('password'),
-        ]);
-        $team = Team::create([
-            'tenant_id' => $tenant->id,
-            'name' => 'Test Team',
-        ]);
+        extract($this->createTenantUserTeam());
+
+        $this->addAvailability($team);
+
+        $slot = $this->getValidSlot($team->id);
 
         // existing booking
         Booking::create([
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,
             'team_id' => $team->id,
-            'date' => Carbon::today()->toDateString(),
-            'start_time' => '09:00:00',
-            'end_time' => '10:00:00',
-        ]);
-
-        // Ensure availability exists for slot validation logic
-        $team->availabilities()->create([
-            'day_of_week' => Carbon::today()->dayOfWeek,
-            'start_time' => '09:00:00',
-            'end_time' => '17:00:00',
+            'date' => $slot['date'],
+            'start_time' => $slot['start_time'],
+            'end_time' => $slot['end_time'],
         ]);
 
         $data = [
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,
             'team_id' => $team->id,
-            'date' => Carbon::today()->toDateString(),
-            'start_time' => '09:00:00',
-            'end_time' => '10:00:00',
+            'date' => $slot['date'],
+            'start_time' => $slot['start_time'],
+            'end_time' => $slot['end_time'],
         ];
 
         $this->service->createBooking($data);
